@@ -1,0 +1,83 @@
+# Maintenance:
+#   - Keep `DOTNET_VERSION` updated to the latest stable dotnet version
+#   - Synchronize the `configuration` matrix with the list of
+#     configurations defined in the project solution
+#   - Adjust `retention-days` to the preference of the repository owner
+
+name: Validate
+
+env:
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+  DOTNET_VERSION: 8.0.x
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    # All types excluding draft
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration:
+          - Debug
+          - Debug Tiles
+          - Debug Tilesanity
+          - Release
+          - Release Tilesanity
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: |
+            packages.lock.json
+            **/Directory.Packages.props
+
+      - name: Cache .NET tools
+        uses: actions/cache@v4
+        with:
+          path: ~/.dotnet/tools
+          key: ${{ runner.os }}-dotnet-tools-${{ hashFiles('**/dotnet-tools.json') }}
+          restore-keys: |
+            ${{ runner.os }}-dotnet-tools-
+
+      - name: Cache **/obj
+        uses: actions/cache@v4
+        with:
+          path: '**/obj'
+          key: ${{ runner.os }}-${{ matrix.configuration }}-obj-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.configuration }}-obj-
+
+      - name: Restore
+        run: dotnet restore --locked-mode
+
+      - name: Build (${{ matrix.configuration }})
+        run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -c "${{ matrix.configuration }}"
+
+      - id: Test
+        if: startsWith(matrix.configuration, 'Release')
+        run: dotnet test --no-build -c "${{ matrix.configuration }}" --logger "junit;LogFileName=test-results.xml" --results-directory test_results/"${{ matrix.configuration }}"
+
+      - name: Upload Test Results
+        if: startsWith(matrix.configuration, 'Release')
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_results_${{ matrix.configuration }}
+          path: test_results/"${{ matrix.configuration }}"
+          retention-days: 30
