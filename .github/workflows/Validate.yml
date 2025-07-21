@@ -39,16 +39,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: setup_dotnet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           cache: true
           cache-dependency-path: |
-            packages.lock.json
             **/Directory.Packages.props
 
-      - name: Cache .NET tools
+      - name: cache_dotnet_tools
         uses: actions/cache@v4
         with:
           path: ~/.dotnet/tools
@@ -56,7 +55,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-dotnet-tools-
 
-      - name: Cache **/obj
+      - name: cache_obj
         uses: actions/cache@v4
         with:
           path: '**/obj'
@@ -64,17 +63,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.configuration }}-obj-
 
-      - name: Restore
+      - name: restore
         run: dotnet restore --locked-mode
 
-      - name: Build (${{ matrix.configuration }})
+      - name: build (${{ matrix.configuration }})
         run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -c "${{ matrix.configuration }}"
 
-      - id: Test
+      - id: test
         if: startsWith(matrix.configuration, 'Release')
         run: dotnet test --no-build -c "${{ matrix.configuration }}" --logger "junit;LogFileName=test-results.xml" --results-directory test_results/"${{ matrix.configuration }}"
 
-      - name: Upload Test Results
+      - name: upload_test_results
         if: startsWith(matrix.configuration, 'Release')
         uses: actions/upload-artifact@v4
         with:
