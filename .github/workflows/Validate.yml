@@ -39,30 +39,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup_dotnet
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           cache: true
+          cache-dependency-path: |
+            - StardewArchipelago/packages.lock.json
+            - StardewArchipelagoTests/packages.lock.json
+      - run: dotnet restore --locked-mode
 
-      - name: cache_dotnet_tools
-        uses: actions/cache@v4
-        with:
-          path: ~/.dotnet/tools
-          key: ${{ runner.os }}-dotnet-tools-${{ hashFiles('**/dotnet-tools.json') }}
-          restore-keys: |
-            ${{ runner.os }}-dotnet-tools-
-
-      - name: cache_obj
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: '**/obj'
           key: ${{ runner.os }}-${{ matrix.configuration }}-obj-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.configuration }}-obj-
-
-      - name: restore
-        run: dotnet restore
 
       - name: build (${{ matrix.configuration }})
         run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -c "${{ matrix.configuration }}"
