@@ -62,7 +62,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.configuration }}-obj-
 
       - name: restore
-        run: dotnet restore --locked-mode
+        run: dotnet restore
 
       - name: build (${{ matrix.configuration }})
         run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -c "${{ matrix.configuration }}"
