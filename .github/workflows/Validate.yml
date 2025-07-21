@@ -7,8 +7,8 @@
 name: Validate
 
 env:
+  DOTNET_VERSION: 8.x
   NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
-  DOTNET_VERSION: 8.0.x
 
 on:
   push:
@@ -44,8 +44,8 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           cache: true
           cache-dependency-path: |
-            - StardewArchipelago/packages.lock.json
-            - StardewArchipelagoTests/packages.lock.json
+            StardewArchipelago/packages.lock.json
+            StardewArchipelagoTests/packages.lock.json
       - run: dotnet restore --locked-mode
 
       - uses: actions/cache@v4
