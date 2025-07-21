@@ -56,7 +56,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.configuration }}-obj-
 
       - name: build (${{ matrix.configuration }})
-        run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -p:EnableGameDebugging=false -p:BundleExtraAssemblies=false -c "${{ matrix.configuration }}"
+        run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -p:EnableGameDebugging=false -p:BundleExtraAssemblies=false -p:GamePath=/placeholder/game/path -c "${{ matrix.configuration }}"
 
       - id: test
         if: startsWith(matrix.configuration, 'Release')
