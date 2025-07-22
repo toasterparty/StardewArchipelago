@@ -60,7 +60,7 @@ jobs:
           restore-keys: ref_dlls-
 
       - name: checkout_ref_assemblies
-        if: steps.cache_ref_assemblies.outputs.cache-hit == 'false'
+        if: steps.cache_ref_assemblies.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: ${{ env.REF_DLLS_REPO }}
