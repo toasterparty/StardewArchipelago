@@ -75,14 +75,14 @@ jobs:
       - name: build (${{ matrix.configuration }})
         run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -p:EnableGameDebugging=false -p:BundleExtraAssemblies=false -p:GamePath="${{ env.REF_DLLS_PATH }}" -c "${{ matrix.configuration }}"
 
-      # - id: test
-      #   if: startsWith(matrix.configuration, 'Release')
-      #   run: dotnet test --no-build -c "${{ matrix.configuration }}" --logger "junit;LogFileName=test-results.xml" --results-directory test_results/"${{ matrix.configuration }}"
+      - id: test
+        if: startsWith(matrix.configuration, 'Release')
+        run: dotnet test --no-build -c "${{ matrix.configuration }}" --logger "junit;LogFileName=test-results.xml" --results-directory test_results/"${{ matrix.configuration }}"
 
-      # - name: upload_test_results
-      #   if: startsWith(matrix.configuration, 'Release')
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: test_results_${{ matrix.configuration }}
-      #     path: test_results/"${{ matrix.configuration }}"
-      #     retention-days: 30
+      - name: upload_test_results
+        if: startsWith(matrix.configuration, 'Release')
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_results_${{ matrix.configuration }}
+          path: test_results/"${{ matrix.configuration }}"
+          retention-days: 30
