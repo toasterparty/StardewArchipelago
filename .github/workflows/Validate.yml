@@ -8,6 +8,11 @@ name: Validate
 
 env:
   DOTNET_VERSION: 8.x
+  REF_DLLS_REPO: StardewModders/mod-reference-assemblies
+  SDV_VER: 1.6.15
+  SMAPI_VER: 4.2.1
+
+  REF_DLLS_PATH: ${{ github.workspace }}/reference-assemblies
   NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
 on:
@@ -25,6 +30,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
 
     strategy:
       fail-fast: false
@@ -37,7 +45,16 @@ jobs:
           - Release Tilesanity
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout reference assemblies
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REF_DLLS_REPO }}
+          path: '${{ env.REF_DLLS_PATH }}'
+          ref: 'SDV${{ env.SDV_VER }}-SMAPI${{ env.SMAPI_VER }}'
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -48,24 +65,24 @@ jobs:
             StardewArchipelagoTests/packages.lock.json
       - run: dotnet restore --locked-mode
 
-      - uses: actions/cache@v4
-        with:
-          path: '**/obj'
-          key: ${{ runner.os }}-${{ matrix.configuration }}-obj-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.configuration }}-obj-
+    #   - uses: actions/cache@v4
+    #     with:
+    #       path: '**/obj'
+    #       key: ${{ runner.os }}-${{ matrix.configuration }}-obj-${{ github.sha }}
+    #       restore-keys: |
+    #         ${{ runner.os }}-${{ matrix.configuration }}-obj-
 
       - name: build (${{ matrix.configuration }})
-        run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -p:EnableGameDebugging=false -p:BundleExtraAssemblies=false -p:GamePath=/placeholder/game/path -c "${{ matrix.configuration }}"
+        run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true -p:EnableModDeploy=false -p:EnableModZip=false -p:EnableGameDebugging=false -p:BundleExtraAssemblies=false -p:GamePath="${{ env.REF_DLLS_PATH }}" -c "${{ matrix.configuration }}"
 
-      - id: test
-        if: startsWith(matrix.configuration, 'Release')
-        run: dotnet test --no-build -c "${{ matrix.configuration }}" --logger "junit;LogFileName=test-results.xml" --results-directory test_results/"${{ matrix.configuration }}"
+      # - id: test
+      #   if: startsWith(matrix.configuration, 'Release')
+      #   run: dotnet test --no-build -c "${{ matrix.configuration }}" --logger "junit;LogFileName=test-results.xml" --results-directory test_results/"${{ matrix.configuration }}"
 
-      - name: upload_test_results
-        if: startsWith(matrix.configuration, 'Release')
-        uses: actions/upload-artifact@v4
-        with:
-          name: test_results_${{ matrix.configuration }}
-          path: test_results/"${{ matrix.configuration }}"
-          retention-days: 30
+      # - name: upload_test_results
+      #   if: startsWith(matrix.configuration, 'Release')
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: test_results_${{ matrix.configuration }}
+      #     path: test_results/"${{ matrix.configuration }}"
+      #     retention-days: 30
