@@ -6,7 +6,8 @@
 name: Validate
 
 env:
-  DOTNET_VERSION: 8.x
+  DOTNET_BUILD_VER: 8.x
+  DOTNET_TARGET_VER: 6.x
   REF_DLLS_REPO: StardewModders/mod-reference-assemblies
   SDV_VER: 1.6.15
   SMAPI_VER: 4.2.1
@@ -58,7 +59,9 @@ jobs:
       - name: setup_dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: |
+            ${{ env.DOTNET_BUILD_VER }}
+            ${{ env.DOTNET_TARGET_VER }}
           cache: true
           cache-dependency-path: |
             StardewArchipelago/packages.lock.json
